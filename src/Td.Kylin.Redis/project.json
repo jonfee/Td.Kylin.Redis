@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0-*",
+  "description": "Td.Kylin.Redis Class Library",
+  "authors": [ "jonfee" ],
+  "tags": [ "" ],
+  "projectUrl": "",
+  "licenseUrl": "",
+  "frameworks": {
+    "dnx451": {
+      "dependencies": {
+      }
+    },
+    "dnxcore50": { }
+  },
+  "dependencies": {
+    "Microsoft.AspNet.Http.Abstractions": "1.0.0-rc1-final",
+    "Newtonsoft.Json": "7.0.1",
+    "StackExchange.Redis": "1.1.553-alpha"
+  }
+}
