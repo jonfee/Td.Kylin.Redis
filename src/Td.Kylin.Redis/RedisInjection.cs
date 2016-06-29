@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNet.Builder;
-using StackExchange.Redis;
+﻿using StackExchange.Redis;
 using System;
+using Microsoft.AspNetCore.Builder;
 
 namespace Td.Kylin.Redis
 {
@@ -23,6 +23,7 @@ namespace Td.Kylin.Redis
             {
                 throw new ArgumentNullException(nameof(builder));
             }
+
             return builder.Use(next => new RedisMiddleware(next, options).Invoke);
         }
 

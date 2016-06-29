@@ -1,8 +1,7 @@
-﻿using Microsoft.AspNet.Builder;
-using Microsoft.AspNet.Http;
-using StackExchange.Redis;
-using System;
+﻿using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using StackExchange.Redis;
 
 namespace Td.Kylin.Redis
 {
