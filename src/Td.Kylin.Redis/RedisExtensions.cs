@@ -3,6 +3,7 @@ using StackExchange.Redis;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace Td.Kylin.Redis
 {
@@ -38,9 +39,12 @@ namespace Td.Kylin.Redis
             {
                 foreach (var v in values)
                 {
-                    T item = v.DeserializeObject<T>();
+                    if (!v.IsNullOrEmpty)
+                    {
+                        T item = v.DeserializeObject<T>();
 
-                    result.Add(item);
+                        result.Add(item);
+                    }
                 }
             }
 
@@ -89,6 +93,8 @@ namespace Td.Kylin.Redis
         /// <returns></returns>
         public static T DeserializeObject<T>(this RedisValue value)
         {
+            if (value.IsNullOrEmpty) return default(T);
+
             return JsonConvert.DeserializeObject<T>(value);
         }
 
@@ -151,7 +157,7 @@ namespace Td.Kylin.Redis
         /// <summary>
         /// 存储数据到hash表
         /// </summary>
-        public static void HashSet<T>(this IDatabase db, RedisKey key, Dictionary<RedisValue, T> fieldValues, CommandFlags flags = CommandFlags.None)
+        public static Task HashSet<T>(this IDatabase db, RedisKey key, Dictionary<RedisValue, T> fieldValues, CommandFlags flags = CommandFlags.None)
         {
             if (null != fieldValues && fieldValues.Count > 0)
             {
@@ -166,8 +172,19 @@ namespace Td.Kylin.Redis
                     data.Add(entry);
                 }
 
-                db.HashSet(key, data.ToArray(), flags);
+                db.HashSetAsync(key, data.ToArray(), flags);
             }
+
+            return null;
+        }
+
+        public static Task<bool> HashSetAsync<T>(this IDatabase db, RedisKey key, RedisValue hashField, T model, When when = When.Always, CommandFlags flags = CommandFlags.None)
+        {
+            if (null == model) return null;
+
+            RedisValue modelValue = model.SerializeObject();
+
+            return db.HashSetAsync(key, hashField, modelValue, when, flags);
         }
 
         /// <summary>
@@ -177,19 +194,90 @@ namespace Td.Kylin.Redis
         {
             var values = db.HashGetAll(key);
 
+            return values.HashFactory<T>();
+        }
+
+        /// <summary>
+        /// 从Hash表中获取指定hashfields字段的数据
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="db"></param>
+        /// <param name="key"></param>
+        /// <param name="hashFields"></param>
+        /// <param name="removeNullOrEmpty">是否移除空对象</param>
+        /// <returns></returns>
+        public static List<T> HashGet<T>(this IDatabase db, RedisKey key, RedisValue[] hashFields, bool removeNullOrEmpty = true)
+        {
+            var values = db.HashGet(key, hashFields);
+
+            if (null == values || values.Length < 1) return null;
+
+            List<T> list = new List<T>();
+
+            foreach (var val in values)
+            {
+                var temp = default(T);
+
+                if (!val.IsNullOrEmpty)
+                {
+                    temp = val.DeserializeObject<T>();
+                }
+
+                if (null != temp || !removeNullOrEmpty)
+                {
+                    list.Add(temp);
+                }
+            }
+
+            return list;
+        }
+
+        /// <summary>
+        /// HashEntry[]转Dictionary<<seealso cref="RedisValue"/>, T>
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="values"></param>
+        /// <returns></returns>
+        private static Dictionary<RedisValue, T> HashFactory<T>(this HashEntry[] values)
+        {
+            if (null == values || values.Length < 1) return null;
+
             var result = new Dictionary<RedisValue, T>();
 
-            var vals = values.OrderBy(x => (double)x.Name).ToList();
+            var vals = values.OrderBy(x => (double)x.Name.GetHashCode()).ToList();
 
             foreach (var v in vals)
             {
+                T item = default(T);
+
                 var name = v.Name;
-                T item = v.Value.DeserializeObject<T>();
+
+                if (!v.Value.IsNullOrEmpty)
+                {
+                    item = v.Value.DeserializeObject<T>();
+                }
 
                 result.Add(name, item);
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// 从Hash表中获取指定hashfield字段的数据
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="db"></param>
+        /// <param name="key"></param>
+        /// <param name="hashField"></param>
+        /// <returns></returns>
+        public static T HashGet<T>(this IDatabase db, RedisKey key, RedisValue hashField)
+        {
+            var value = db.HashGet(key, hashField);
+
+            if (value.IsNullOrEmpty) return default(T);
+
+            return value.DeserializeObject<T>();
         }
 
         #endregion
