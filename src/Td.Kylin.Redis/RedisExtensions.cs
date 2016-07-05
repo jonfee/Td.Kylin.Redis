@@ -178,6 +178,17 @@ namespace Td.Kylin.Redis
             return null;
         }
 
+        /// <summary>
+        /// 异步存储数据到hash表
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="db"></param>
+        /// <param name="key"></param>
+        /// <param name="hashField"></param>
+        /// <param name="model"></param>
+        /// <param name="when"></param>
+        /// <param name="flags"></param>
+        /// <returns></returns>
         public static Task<bool> HashSetAsync<T>(this IDatabase db, RedisKey key, RedisValue hashField, T model, When when = When.Always, CommandFlags flags = CommandFlags.None)
         {
             if (null == model) return null;
@@ -233,7 +244,7 @@ namespace Td.Kylin.Redis
         }
 
         /// <summary>
-        /// HashEntry[]转Dictionary<<seealso cref="RedisValue"/>, T>
+        /// HashEntry[]转Dictionary
         /// </summary>
         /// <typeparam name="T"></typeparam>
         /// <param name="values"></param>
