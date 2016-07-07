@@ -43,7 +43,11 @@ namespace Td.Kylin.Redis
         {
             if (!IsConnected)
             {
-                _multiplexer = ConnectionMultiplexer.Connect(_options, log);
+                Lazy<ConnectionMultiplexer> lazyConnection = new Lazy<ConnectionMultiplexer>(() =>
+                {
+                    return ConnectionMultiplexer.Connect(_options, log);
+                });
+                _multiplexer = lazyConnection.Value;
             }
         }
 
