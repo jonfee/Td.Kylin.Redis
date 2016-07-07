@@ -15,8 +15,6 @@ namespace Td.Kylin.Redis
 
         private ConnectionMultiplexer _multiplexer;
 
-        private bool _isConnected;
-
         #endregion
 
         /// <summary>
@@ -43,9 +41,21 @@ namespace Td.Kylin.Redis
         /// <param name="log"></param>
         private void Connect(TextWriter log = null)
         {
-            _multiplexer = ConnectionMultiplexer.Connect(_options, log);
+            if (!IsConnected)
+            {
+                _multiplexer = ConnectionMultiplexer.Connect(_options, log);
+            }
+        }
 
-            if (_multiplexer != null) _isConnected = _multiplexer.IsConnected;
+        /// <summary>
+        /// 是否已连接
+        /// </summary>
+        public bool IsConnected
+        {
+            get
+            {
+                return null != _multiplexer ? _multiplexer.IsConnected : false;
+            }
         }
 
         /// <summary>
@@ -69,9 +79,16 @@ namespace Td.Kylin.Redis
         /// <returns></returns>
         public IDatabase GetDatabase(int db = -1, object asyncState = null)
         {
-            if (!_isConnected) Connect();
+            if (!IsConnected) Connect();
 
-            return _multiplexer.GetDatabase(db, asyncState);
+            if (IsConnected)
+            {
+                return _multiplexer.GetDatabase(db, asyncState);
+            }
+            else
+            {
+                return null;
+            }
         }
 
         /// <summary>
