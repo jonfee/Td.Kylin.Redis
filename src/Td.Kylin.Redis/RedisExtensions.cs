@@ -39,12 +39,14 @@ namespace Td.Kylin.Redis
             {
                 foreach (var v in values)
                 {
+                    T item = default(T);
+
                     if (!v.IsNullOrEmpty)
                     {
-                        T item = v.DeserializeObject<T>();
-
-                        result.Add(item);
+                        item = v.DeserializeObject<T>();
                     }
+
+                    result.Add(item);
                 }
             }
 
@@ -82,6 +84,8 @@ namespace Td.Kylin.Redis
         /// <returns></returns>
         public static string SerializeObject<T>(this T value)
         {
+            if (null == value) return null;
+
             return JsonConvert.SerializeObject(value);
         }
 
@@ -112,6 +116,7 @@ namespace Td.Kylin.Redis
         public static T StringGet<T>(this IDatabase db, RedisKey key)
         {
             var r = db.StringGet(key);
+
             return r.DeserializeObject<T>();
         }
 

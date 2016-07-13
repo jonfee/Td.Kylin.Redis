@@ -1,6 +1,5 @@
 ﻿using StackExchange.Redis;
 using System;
-using System.IO;
 
 namespace Td.Kylin.Redis
 {
@@ -15,50 +14,45 @@ namespace Td.Kylin.Redis
 
         private ConnectionMultiplexer _multiplexer;
 
-        private bool _autoConnect = false;
-
         #endregion
+
+        /// <summary>
+        /// ConnectionMultiplexer
+        /// </summary>
+        public ConnectionMultiplexer Multiplexer
+        {
+            get
+            {
+                if (_multiplexer == null || !_multiplexer.IsConnected)
+                {
+                    Lazy<ConnectionMultiplexer> lazyConnection = new Lazy<ConnectionMultiplexer>(() =>
+                    {
+                        return ConnectionMultiplexer.Connect(_options);
+                    });
+
+                    _multiplexer = lazyConnection.Value;
+                }
+
+                return _multiplexer;
+            }
+        }
 
         /// <summary>
         /// Redis上下文
         /// </summary>
         /// <param name="options"><seealso cref="ConfigurationOptions"/>实例对象</param>
-        /// <param name="autoConnect">是否自动连接</param>
-        public RedisContext(ConfigurationOptions options, bool autoConnect = true)
+        public RedisContext(ConfigurationOptions options)
         {
             _options = options;
-            _autoConnect = autoConnect;
-
-            if (_autoConnect) Connect();
         }
 
         /// <summary>
         /// Redis上下文
         /// </summary>
         /// <param name="connectionString">Redis连接配置字符串</param>
-        /// <param name="autoConnect">是否自动连接</param>
-        public RedisContext(string connectionString, bool autoConnect = true)
+        public RedisContext(string connectionString)
         {
             _options = ConfigurationOptions.Parse(connectionString);
-            _autoConnect = autoConnect;
-
-            if (_autoConnect) Connect();
-        }
-
-        /// <summary>
-        /// 连接Redis服务器
-        /// </summary>
-        /// <param name="log"></param>
-        public void Connect(TextWriter log = null)
-        {
-            if (null != _multiplexer) _multiplexer.Close();
-
-            Lazy<ConnectionMultiplexer> lazyConnection = new Lazy<ConnectionMultiplexer>(() =>
-            {
-                return ConnectionMultiplexer.Connect(_options, log);
-            });
-
-            _multiplexer = lazyConnection.Value;
         }
 
         /// <summary>
@@ -93,12 +87,7 @@ namespace Td.Kylin.Redis
         /// <returns></returns>
         public IDatabase GetDatabase(int db = -1, object asyncState = null)
         {
-            if (!IsConnected && (_autoConnect || _multiplexer != null))
-            {
-                Connect();
-            }
-
-            return _multiplexer.GetDatabase(db, asyncState);
+            return Multiplexer.GetDatabase(db, asyncState);
         }
 
         /// <summary>
