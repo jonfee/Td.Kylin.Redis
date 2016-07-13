@@ -25,12 +25,7 @@ namespace Td.Kylin.Redis
             {
                 if (_multiplexer == null || !_multiplexer.IsConnected)
                 {
-                    Lazy<ConnectionMultiplexer> lazyConnection = new Lazy<ConnectionMultiplexer>(() =>
-                    {
-                        return ConnectionMultiplexer.Connect(_options);
-                    });
-
-                    _multiplexer = lazyConnection.Value;
+                    _multiplexer = ConnectionMultiplexer.Connect(_options);
                 }
 
                 return _multiplexer;
@@ -62,7 +57,7 @@ namespace Td.Kylin.Redis
         {
             get
             {
-                return null != _multiplexer ? _multiplexer.IsConnected : false;
+                return null != Multiplexer ? Multiplexer.IsConnected : false;
             }
         }
 
